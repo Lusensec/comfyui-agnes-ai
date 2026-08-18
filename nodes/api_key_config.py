@@ -16,12 +16,13 @@ PLUGIN_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 CONFIG_FILE = os.path.join(PLUGIN_DIR, "api_key_config.json")
 
 
-class AgnesAPIKeyConfig:
+class AgnesNovelAPIKeyConfig:
     """Persist Agnes API key to a local config file for all nodes to share."""
 
-    CATEGORY = "Agnes AI"
-    RETURN_TYPES = ("STRING", "STRING")
-    RETURN_NAMES = ("status", "masked_key")
+    CATEGORY = "Agnes Novel"
+    RETURN_TYPES = ("STRING", "STRING", "STRING")
+    RETURN_NAMES = ("status", "masked_key", "full_key")
+    RETURN_LABELS = ('状态信息', '已掩码的Key', '完整Key')
     FUNCTION = "save_key"
     OUTPUT_NODE = True
 
@@ -57,7 +58,7 @@ class AgnesAPIKeyConfig:
             "hidden": {},
         }
 
-    def save_key(self, api_key: str, clear_key: bool = False) -> Tuple[str, str]:
+    def save_key(self, api_key: str, clear_key: bool = False) -> Tuple[str, str, str]:
         """
         Save or clear the API key in the plugin config file.
         """
@@ -65,11 +66,11 @@ class AgnesAPIKeyConfig:
             # Remove config file
             if os.path.exists(CONFIG_FILE):
                 os.remove(CONFIG_FILE)
-            return ("[OK] API key has been cleared from config.", "")
+            return ("[OK] API key has been cleared from config.", "", "")
 
         key = api_key.strip()
         if not key:
-            return ("[Error] API key is empty. Please enter a valid key.", "")
+            return ("[Error] API key is empty. Please enter a valid key.", "", "")
 
         # Save to JSON config file
         config_data = {"api_key": key}
@@ -78,7 +79,7 @@ class AgnesAPIKeyConfig:
             with open(CONFIG_FILE, "w", encoding="utf-8") as f:
                 json.dump(config_data, f, ensure_ascii=False, indent=2)
         except Exception as e:
-            return (f"[Error] Failed to save config: {str(e)}", "")
+            return (f"[Error] Failed to save config: {str(e)}", "", "")
 
         # Mask the key for display (show first 8 + last 4 chars)
         if len(key) > 12:
@@ -92,4 +93,8 @@ class AgnesAPIKeyConfig:
             f"[OK] API key saved to {os.path.basename(CONFIG_FILE)}. "
             f"All other Agnes nodes will now auto-load this key.",
             masked,
+            key,
         )
+
+NODE_CLASS_MAPPINGS = {"AgnesNovelAPIKeyConfig": AgnesNovelAPIKeyConfig}
+NODE_DISPLAY_NAME_MAPPINGS = {"AgnesNovelAPIKeyConfig": "🔑 Agnes Novel API Key 配置"}
